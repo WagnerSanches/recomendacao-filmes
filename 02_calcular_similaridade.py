@@ -1,5 +1,5 @@
 """Calcula a correlação de Pearson entre filmes (usando só as notas de treino)
-e grava como arestas (:Movie)-[:SIMILAR {corr, common}]-(:Movie) no Neo4j."""
+e grava como arestas (:Movie)-[:SIMILAR {corr, pearson, common}]-(:Movie) no Neo4j."""
 import time
 
 import config
@@ -24,13 +24,13 @@ def main():
         print("Gravando arestas SIMILAR...")
         while consultar(driver, "MATCH ()-[s:SIMILAR]->() WITH s LIMIT 10000 DELETE s RETURN count(*) AS qtd")[0]["qtd"]:
             pass
-        linhas = [{"i": i, "j": j, "c": c, "n": n} for i, j, c, n in pares]
+        linhas = [{"i": i, "j": j, "c": c, "n": n, "p": p} for i, j, c, n, p in pares]
         for lote in em_lotes(linhas):
             consultar(driver, """
                 UNWIND $lote AS p
                 MATCH (a:Movie {movieId: p.i})
                 MATCH (b:Movie {movieId: p.j})
-                CREATE (a)-[:SIMILAR {corr: p.c, common: p.n}]->(b)
+                CREATE (a)-[:SIMILAR {corr: p.c, pearson: p.p, common: p.n}]->(b)
             """, lote=lote)
     print("Pronto.")
 

@@ -13,6 +13,8 @@ import config
 
 
 def conectar():
+    if not config.NEO4J_PASSWORD:
+        raise SystemExit("Defina NEO4J_PASSWORD no arquivo .env (veja .env.example) ou como variável de ambiente.")
     driver = GraphDatabase.driver(config.NEO4J_URI, auth=(config.NEO4J_USER, config.NEO4J_PASSWORD))
     driver.verify_connectivity()
     return driver
@@ -104,7 +106,8 @@ def dividir_treino_teste(notas):
 
 def calcular_pearson(notas_treino):
     """notas_treino: lista de (userId, movieId, rating).
-    Retorna lista de (movie_i, movie_j, correlacao, usuarios_em_comum) com i < j."""
+    Retorna lista de (movie_i, movie_j, corr, usuarios_em_comum, pearson) com i < j, onde
+    corr = pearson · n / (n + β) é a correlação com shrinkage usada no KNN."""
     por_filme = defaultdict(list)
     for _, m, r in notas_treino:
         por_filme[m].append(r)
@@ -144,7 +147,9 @@ def calcular_pearson(notas_treino):
             continue
         c = soma_prod / (math.sqrt(soma_i) * math.sqrt(soma_j))
         if c > config.MIN_CORR:
-            resultado.append((mi, mj, c, n))
+            # shrinkage: correlações com poucos usuários em comum perdem peso
+            ajustada = c * n / (n + config.SHRINKAGE_BETA)
+            resultado.append((mi, mj, ajustada, n, c))
     return resultado
 
 

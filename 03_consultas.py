@@ -30,7 +30,8 @@ def generos_favoritos(driver, usuario):
 def filmes_similares(driver, filme):
     return consultar(driver, """
         MATCH (a:Movie {movieId: $filme})-[s:SIMILAR]-(b:Movie)
-        RETURN a.title AS filme, b.title AS similar, round(s.corr, 3) AS corr, s.common AS em_comum
+        RETURN a.title AS filme, b.title AS similar, round(s.corr, 3) AS corr,
+               round(s.pearson, 3) AS pearson, s.common AS em_comum
         ORDER BY s.corr DESC LIMIT 10
     """, filme=filme)
 
@@ -76,7 +77,7 @@ def main():
 
         print(f"\nFilmes mais similares ao filme {args.filme}:")
         for s in filmes_similares(driver, args.filme):
-            print(f"  {s['similar']:<50} corr={s['corr']}  em comum={s['em_comum']}")
+            print(f"  {s['similar']:<50} corr={s['corr']}  pearson={s['pearson']}  em comum={s['em_comum']}")
 
         print(f"\nTop {config.TOP_N} recomendações para o usuário {args.usuario}:")
         for i, rec in enumerate(top_recomendacoes(driver, args.usuario), start=1):

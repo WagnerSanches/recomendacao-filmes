@@ -90,11 +90,61 @@ python 04_avaliacao.py
 
 ## Resultados
 
-Saída de `python 04_avaliacao.py` com a configuração padrão (dataset 20M, 2000 usuários):
+Configuração padrão: dataset 20M do Kaggle, primeiros 2000 usuários (290.944 notas: 233.503 de treino
+e 57.441 de teste), 27.278 filmes e 569.670 arestas `SIMILAR`.
+
+Tempos: inserção ~30s, cálculo de Pearson ~16s, script de similaridade completo ~60s.
+
+### Avaliação (`python 04_avaliacao.py`)
 
 ```
-(executar e colar aqui)
+Cobertura: 46003/57441 notas de teste com predição (80.1%)
+
+Classificação (limiar = 4.0)
+  Precisão: 0.8076
+  Recall:   0.2508
+  F1:       0.3828
+
+Ranking (N = 10, média de 1962 usuários)
+  Precisão@10: 0.6261
+  Recall@10:   0.6604
+
+Erro da nota prevista
+  MAE:  0.7069
+  RMSE: 0.9105
 ```
+
+**Interpretação:**
+- **Precisão alta (0,81), recall baixo (0,25):** quando o modelo prevê nota ≥ 4, acerta 81% das vezes.
+  Mas a predição é uma média ponderada de notas, então tende a ficar perto da média do usuário e
+  raramente passa de 4. Por isso, muitos filmes que o usuário gostou ficam abaixo do limiar.
+- **No ranking, o recall sobe (0,66):** quando ordenamos os filmes pela nota prevista, em vez de usar
+  um limiar fixo, o modelo coloca bem os filmes relevantes no topo da lista.
+- **Erro médio (MAE):** cerca de 0,7 ponto na escala de 0,5 a 5.
+- **Cobertura de 80%:** os 20% sem predição são filmes fora dos 2000 mais avaliados, ou filmes com
+  menos de 2 vizinhos avaliados pelo usuário.
+
+### Consultas (`python 03_consultas.py --usuario 1`)
+
+```
+Usuário 1 assistiu 21 filmes de Comedy com nota >= 4.0
+
+Top 10 recomendações para o usuário 1:
+   1. Princess Diaries, The (2001)  nota prevista 4.298  [7 vizinhos]
+   2. 102 Dalmatians (2000)  nota prevista 4.288  [16 vizinhos]
+   3. Hidalgo (2004)  nota prevista 4.216  [20 vizinhos]
+   4. Thor (2011)  nota prevista 4.182  [15 vizinhos]
+   5. Intouchables (2011)  nota prevista 4.148  [8 vizinhos]
+   6. Hunger Games: Catching Fire, The (2013)  nota prevista 4.143  [20 vizinhos]
+   7. Mighty Wind, A (2003)  nota prevista 4.142  [20 vizinhos]
+   8. Hunger Games, The (2012)  nota prevista 4.134  [20 vizinhos]
+   9. Bourne Identity, The (1988)  nota prevista 4.128  [20 vizinhos]
+  10. Persepolis (2007)  nota prevista 4.126  [19 vizinhos]
+```
+
+**Limitação observada:** com `MIN_COMMON_USERS = 10`, aparecem correlações altas baseadas em poucos
+usuários (por exemplo, Toy Story × Dead Calm: 0,89 com 14 usuários em comum). Aumentar esse valor
+deixa as similaridades mais confiáveis, mas reduz a cobertura.
 
 ## Consultas Cypher úteis
 
